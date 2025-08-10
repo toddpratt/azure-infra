@@ -1,0 +1,5 @@
+creation_rules:
+  - path_regex: (bin/config\.env\.enc|\.tfvars\.enc)$
+    input_type: binary
+    output_type: binary
+    age: "age1l3ksfh8s2gf3gfqt8hvaunr5cygam9tp58c6mp4uker96tlz85ys8zc7uq"
