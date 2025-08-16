@@ -1,33 +1,44 @@
 terraform {
-  backend "local" {}   # store state locally just for bootstrap
+  backend "local" {} # bootstrap uses local state only
 }
 
 provider "azurerm" {
   features {}
-  use_cli = true
 }
 
-resource "azurerm_resource_group" "rg" {
-  name     = "tf-bootstrap-rg"
-  location = "eastus"
+variable "location" {
+  default = "eastus"
 }
 
-resource "azurerm_storage_account" "sa" {
-  name                     = "tfstate${random_integer.suffix.result}"
-  resource_group_name      = azurerm_resource_group.rg.name
-  location                 = azurerm_resource_group.rg.location
+variable "environments" {
+  type    = list(string)
+  default = ["dev", "staging", "prod"]
+}
+
+resource "azurerm_resource_group" "tfstate" {
+  name     = "rg-tfstate"
+  location = var.location
+}
+
+resource "azurerm_storage_account" "tfstate" {
+  for_each                 = toset(var.environments)
+  name                     = "tfstate${each.key}${random_integer.suffix[each.key].result}"
+  resource_group_name      = azurerm_resource_group.tfstate.name
+  location                 = azurerm_resource_group.tfstate.location
   account_tier             = "Standard"
   account_replication_type = "LRS"
 }
 
-resource "azurerm_storage_container" "state" {
-  name                  = "tfstate"
-  storage_account_id    = azurerm_storage_account.sa.id
+resource "azurerm_storage_container" "tfstate" {
+  for_each             = toset(var.environments)
+  name                 = "tfstate"
+  storage_account_id   = azurerm_storage_account.tfstate[each.key].id
   container_access_type = "private"
 }
 
 resource "random_integer" "suffix" {
-  min = 10000
-  max = 99999
+  for_each = toset(var.environments)
+  min      = 10000
+  max      = 99999
 }
 
