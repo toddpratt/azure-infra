@@ -30,36 +30,36 @@ resource "azurerm_subnet" "jump" {
   name                 = "jump"
   resource_group_name  = azurerm_resource_group.rg.name
   virtual_network_name = azurerm_virtual_network.vnet.name
-  address_prefixes     = [var.subnets["proxy"]]
+  address_prefixes     = [var.subnets["jump"]]
 }
 
 resource "azurerm_subnet" "cicd" {
   name                 = "cicd"
   resource_group_name  = azurerm_resource_group.rg.name
   virtual_network_name = azurerm_virtual_network.vnet.name
-  address_prefixes     = [var.subnets["api"]]
+  address_prefixes     = [var.subnets["cicd"]]
 }
 
 resource "azurerm_subnet" "observability" {
   name                 = "observability"
   resource_group_name  = azurerm_resource_group.rg.name
   virtual_network_name = azurerm_virtual_network.vnet.name
-  address_prefixes     = [var.subnets["web"]]
+  address_prefixes     = [var.subnets["observability"]]
 }
 
-resource "azurerm_network_security_group" "proxy" {
+resource "azurerm_network_security_group" "jump" {
   name                = "${var.name_prefix}-nsg-jump"
   location            = azurerm_resource_group.rg.location
   resource_group_name = azurerm_resource_group.rg.name
 }
 
-resource "azurerm_network_security_group" "api" {
+resource "azurerm_network_security_group" "cicd" {
   name                = "${var.name_prefix}-nsg-cicd"
   location            = azurerm_resource_group.rg.location
   resource_group_name = azurerm_resource_group.rg.name
 }
 
-resource "azurerm_network_security_group" "web" {
+resource "azurerm_network_security_group" "observability" {
   name                = "${var.name_prefix}-nsg-observability"
   location            = azurerm_resource_group.rg.location
   resource_group_name = azurerm_resource_group.rg.name
@@ -87,7 +87,7 @@ resource "azurerm_network_security_rule" "jump_allow_jump_ssh" {
   protocol                    = "Tcp"
   source_port_range           = "*"
   destination_port_range      = "22"
-  source_address_prefixes     = "*"
+  source_address_prefix       = "*"
   destination_address_prefix  = "*"
   resource_group_name         = azurerm_resource_group.rg.name
   network_security_group_name = azurerm_network_security_group.jump.name
