@@ -1,0 +1,14 @@
+#! /bin/bash
+
+set -euo pipefail
+source "$(dirname $0)/config.env"
+
+ENV_NAME="${1:-}"
+if [[ -z "$ENV_NAME" ]]; then
+  echo "Usage: $0 <env>" 1>&2
+  exit 1
+fi
+
+SA_NAME="${SA_PREFIX}${ENV_NAME}"
+az storage account delete -g "$TFSTATE_RG" -n "$SA_NAME" --yes
+
