@@ -114,7 +114,7 @@ resource "azurerm_network_security_rule" "cicd_allow_jump" {
   access                      = "Allow"
   protocol                    = "Tcp"
   source_port_range           = "*"
-  destination_port_range      = "22,80,443,8080"
+  destination_port_range      = "*"
   source_address_prefixes     = azurerm_subnet.jump.address_prefixes
   destination_address_prefix  = "*"
   resource_group_name         = azurerm_resource_group.rg.name
@@ -143,7 +143,7 @@ resource "azurerm_network_security_rule" "observability_allow_jump" {
   protocol                    = "Tcp"
   source_port_range           = "*"
   source_address_prefixes     = azurerm_subnet.jump.address_prefixes
-  destination_port_range      = "22,80,443,8080"
+  destination_port_range      = "*"
   destination_address_prefix  = "*"
   resource_group_name         = azurerm_resource_group.rg.name
   network_security_group_name = azurerm_network_security_group.observability.name
