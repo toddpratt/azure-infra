@@ -5,8 +5,6 @@ terraform {
 provider "azurerm" {
   features {}
   use_cli = true
-  subscription_id = "733cac6c-200d-4211-8c37-2767d418d4dd"
-  tenant_id       = "bb829a09-a72c-4b3f-821c-090135a8054b"
 }
 
 resource "azurerm_resource_group" "rg" {
