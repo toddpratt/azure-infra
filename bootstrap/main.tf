@@ -12,7 +12,7 @@ variable "location" {
 
 variable "environments" {
   type    = list(string)
-  default = ["dev", "staging", "prod"]
+  default = ["hub", "dev", "staging", "prod"]
 }
 
 resource "azurerm_resource_group" "tfstate" {
