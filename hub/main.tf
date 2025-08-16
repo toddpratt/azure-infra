@@ -11,10 +11,15 @@ provider "azurerm" {
   features {}
 }
 
+variable "backend_sa" { default = "tfstate-hub-99676" }
+variable "env_name"    { default = "hub" }
+variable "resource_group" { default = "rg-hub" }
+variable "location"    { default = "eastus2" }
+
 module "network" {
   source              = "./modules/network"
-  resource_group_name = "rg-hub"
-  location            = "eastus2"
+  resource_group_name = var.resource_group
+  location            = var.location
   name_prefix         = "hub"
   vnet_cidr           = "10.0.0.0/16"
   subnets = {
@@ -22,5 +27,15 @@ module "network" {
     cicd            = "10.0.2.0/24"
     observability   = "10.0.3.0/24"
   }
+}
+
+module "jumpbox" {
+  source              = "../modules/vm"
+  name                = "jumpbox"
+  resource_group_name = var.resource_group
+  location            = var.location
+  subnet_id           = module.network.subnet_ids["jump"]
+  ssh_public_key      = "~/.ssh/id_rsa.pub"
+  create_public_ip    = true
 }
 
