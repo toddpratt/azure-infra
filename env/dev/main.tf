@@ -35,9 +35,47 @@ module "network" {
   }
 }
 
-module "db" {
+module "proxy" {
+  count               = 1
   source              = "../../modules/vm"
-  name                = "db"
+  name                = "proxy-${count.index}"
+  ansible_group       = "proxy"
+  resource_group_name = var.resource_group
+  location            = var.location
+  subnet_id           = module.network.subnet_ids["proxy"]
+  ssh_public_key      = file(var.ssh_public_key_path)
+  create_public_ip    = false
+}
+
+module "api" {
+  count               = 2
+  source              = "../../modules/vm"
+  name                = "api-${count.index}"
+  ansible_group       = "api"
+  resource_group_name = var.resource_group
+  location            = var.location
+  subnet_id           = module.network.subnet_ids["api"]
+  ssh_public_key      = file(var.ssh_public_key_path)
+  create_public_ip    = false
+}
+
+module "web" {
+  count               = 1
+  source              = "../../modules/vm"
+  name                = "web-${count.index}"
+  ansible_group       = "web"
+  resource_group_name = var.resource_group
+  location            = var.location
+  subnet_id           = module.network.subnet_ids["web"]
+  ssh_public_key      = file(var.ssh_public_key_path)
+  create_public_ip    = false
+}
+
+module "db" {
+  count               = 1
+  source              = "../../modules/vm"
+  name                = "db-${count.index}"
+  ansible_group       = "db"
   resource_group_name = var.resource_group
   location            = var.location
   subnet_id           = module.network.subnet_ids["db"]
