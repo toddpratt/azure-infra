@@ -4,11 +4,10 @@ resource "azurerm_public_ip" "this" {
   name                = "${var.name}-ip"
   location            = var.location
   resource_group_name = var.resource_group_name
-  allocation_method   = "Dynamic"
+  allocation_method   = "Static"
   sku                 = "Basic"
 }
 
-# NIC
 resource "azurerm_network_interface" "this" {
   name                = "${var.name}-nic"
   location            = var.location
@@ -22,7 +21,6 @@ resource "azurerm_network_interface" "this" {
   }
 }
 
-# VM
 resource "azurerm_linux_virtual_machine" "this" {
   name                = var.name
   location            = var.location

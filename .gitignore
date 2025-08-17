@@ -4,3 +4,4 @@
 terraform.tfvars
 terraform.tfvars.json
 *.tfstate*
+.*.swp

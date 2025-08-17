@@ -20,141 +20,63 @@ resource "azurerm_virtual_network" "vnet" {
   resource_group_name = azurerm_resource_group.rg.name
 }
 
-resource "azurerm_subnet" "jump" {
-  name                 = "jump"
-  resource_group_name  = azurerm_resource_group.rg.name
-  virtual_network_name = azurerm_virtual_network.vnet.name
-  address_prefixes     = [var.subnets["jump"]]
+module "jump_subnet" {
+  source      = "../base_subnet"
+  name_prefix = "jump"
+  rg_name     = azurerm_resource_group.rg.name
+  location    = azurerm_resource_group.rg.location
+  vnet_name   = azurerm_virtual_network.vnet.name
+  subnet      = var.subnets.jump
+  public_ssh  = true
 }
 
-resource "azurerm_subnet" "cicd" {
-  name                 = "cicd"
-  resource_group_name  = azurerm_resource_group.rg.name
-  virtual_network_name = azurerm_virtual_network.vnet.name
-  address_prefixes     = [var.subnets["cicd"]]
+module "cicd_subnet" {
+  source          = "../base_subnet"
+  name_prefix     = "cicd"
+  rg_name         = azurerm_resource_group.rg.name
+  location        = azurerm_resource_group.rg.location
+  vnet_name       = azurerm_virtual_network.vnet.name
+  subnet          = var.subnets.cicd
+  jumphost_subnet = var.subnets.jump
 }
 
-resource "azurerm_subnet" "observability" {
-  name                 = "observability"
-  resource_group_name  = azurerm_resource_group.rg.name
-  virtual_network_name = azurerm_virtual_network.vnet.name
-  address_prefixes     = [var.subnets["observability"]]
+module "observability_subnet" {
+  source          = "../base_subnet"
+  name_prefix     = "observability"
+  rg_name         = azurerm_resource_group.rg.name
+  location        = azurerm_resource_group.rg.location
+  vnet_name       = azurerm_virtual_network.vnet.name
+  subnet          = var.subnets.observability
+  jumphost_subnet = var.subnets.jump
 }
 
-resource "azurerm_network_security_group" "jump" {
-  name                = "${var.name_prefix}-nsg-jump"
-  location            = azurerm_resource_group.rg.location
-  resource_group_name = azurerm_resource_group.rg.name
+module "metrics_subnet" {
+  source          = "../base_subnet"
+  name_prefix     = "metrics"
+  rg_name         = azurerm_resource_group.rg.name
+  location        = azurerm_resource_group.rg.location
+  vnet_name       = azurerm_virtual_network.vnet.name
+  subnet          = var.subnets.metrics
+  jumphost_subnet = var.subnets.jump
 }
 
-resource "azurerm_network_security_group" "cicd" {
-  name                = "${var.name_prefix}-nsg-cicd"
-  location            = azurerm_resource_group.rg.location
-  resource_group_name = azurerm_resource_group.rg.name
+module "logs_subnet" {
+  source          = "../base_subnet"
+  name_prefix     = "logs"
+  rg_name         = azurerm_resource_group.rg.name
+  location        = azurerm_resource_group.rg.location
+  vnet_name       = azurerm_virtual_network.vnet.name
+  subnet          = var.subnets.logs
+  jumphost_subnet = var.subnets.jump
 }
 
-resource "azurerm_network_security_group" "observability" {
-  name                = "${var.name_prefix}-nsg-observability"
-  location            = azurerm_resource_group.rg.location
-  resource_group_name = azurerm_resource_group.rg.name
-}
-
-resource "azurerm_network_security_rule" "jump_deny_vnet" {
-  name                        = "deny-vnet-inbound"
-  priority                    = 200
-  direction                   = "Inbound"
-  access                      = "Deny"
-  protocol                    = "*"
-  source_port_range           = "*"
-  destination_port_range      = "*"
-  source_address_prefix       = "VirtualNetwork"
-  destination_address_prefix  = "*"
-  resource_group_name         = azurerm_resource_group.rg.name
-  network_security_group_name = azurerm_network_security_group.jump.name
-}
-
-resource "azurerm_network_security_rule" "jump_allow_jump_ssh" {
-  name                        = "allow-jump-ssh"
-  priority                    = 100
-  direction                   = "Inbound"
-  access                      = "Allow"
-  protocol                    = "Tcp"
-  source_port_range           = "*"
-  destination_port_range      = "22"
-  source_address_prefix       = "*"
-  destination_address_prefix  = "*"
-  resource_group_name         = azurerm_resource_group.rg.name
-  network_security_group_name = azurerm_network_security_group.jump.name
-}
-
-resource "azurerm_network_security_rule" "cicd_deny_vnet" {
-  name                        = "deny-vnet-inbound"
-  priority                    = 200
-  direction                   = "Inbound"
-  access                      = "Deny"
-  protocol                    = "*"
-  source_port_range           = "*"
-  destination_port_range      = "*"
-  source_address_prefix       = "VirtualNetwork"
-  destination_address_prefix  = "*"
-  resource_group_name         = azurerm_resource_group.rg.name
-  network_security_group_name = azurerm_network_security_group.cicd.name
-}
-
-resource "azurerm_network_security_rule" "cicd_allow_jump" {
-  name                        = "allow-ports"
-  priority                    = 100
-  direction                   = "Inbound"
-  access                      = "Allow"
-  protocol                    = "Tcp"
-  source_port_range           = "*"
-  destination_port_range      = "*"
-  source_address_prefixes     = azurerm_subnet.jump.address_prefixes
-  destination_address_prefix  = "*"
-  resource_group_name         = azurerm_resource_group.rg.name
-  network_security_group_name = azurerm_network_security_group.cicd.name
-}
-
-resource "azurerm_network_security_rule" "observability_deny_vnet" {
-  name                        = "deny-vnet-inbound"
-  priority                    = 200
-  direction                   = "Inbound"
-  access                      = "Deny"
-  protocol                    = "*"
-  source_port_range           = "*"
-  destination_port_range      = "*"
-  source_address_prefix       = "VirtualNetwork"
-  destination_address_prefix  = "*"
-  resource_group_name         = azurerm_resource_group.rg.name
-  network_security_group_name = azurerm_network_security_group.observability.name
-}
-
-resource "azurerm_network_security_rule" "observability_allow_jump" {
-  name                        = "allow-ports"
-  priority                    = 100
-  direction                   = "Inbound"
-  access                      = "Allow"
-  protocol                    = "Tcp"
-  source_port_range           = "*"
-  source_address_prefixes     = azurerm_subnet.jump.address_prefixes
-  destination_port_range      = "*"
-  destination_address_prefix  = "*"
-  resource_group_name         = azurerm_resource_group.rg.name
-  network_security_group_name = azurerm_network_security_group.observability.name
-}
-
-resource "azurerm_subnet_network_security_group_association" "jump_assoc" {
-  subnet_id                 = azurerm_subnet.jump.id
-  network_security_group_id = azurerm_network_security_group.jump.id
-}
-
-resource "azurerm_subnet_network_security_group_association" "cicd_assoc" {
-  subnet_id                 = azurerm_subnet.cicd.id
-  network_security_group_id = azurerm_network_security_group.cicd.id
-}
-
-resource "azurerm_subnet_network_security_group_association" "observability_assoc" {
-  subnet_id                 = azurerm_subnet.observability.id
-  network_security_group_id = azurerm_network_security_group.observability.id
+module "trace_subnet" {
+  source          = "../base_subnet"
+  name_prefix     = "trace"
+  rg_name         = azurerm_resource_group.rg.name
+  location        = azurerm_resource_group.rg.location
+  vnet_name       = azurerm_virtual_network.vnet.name
+  subnet          = var.subnets.trace
+  jumphost_subnet = var.subnets.jump
 }
 
