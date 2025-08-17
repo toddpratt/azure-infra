@@ -1,50 +1,7 @@
-variable "name" {
-  description = "Base name for the VM and related resources"
-  type        = string
-}
 
-variable "location" {
-  description = "Azure location"
-  type        = string
-}
-
-variable "resource_group_name" {
-  description = "Resource group name"
-  type        = string
-}
-
-variable "subnet_id" {
-  description = "Subnet ID to attach the NIC"
-  type        = string
-}
-
-variable "admin_username" {
-  description = "Admin username for the VM"
-  type        = string
-  default     = "ubuntu"
-}
-
-variable "ssh_public_key" {
-  description = "SSH public key path or value"
-  type        = string
-}
-
-variable "vm_size" {
-  description = "VM size"
-  type        = string
-  default     = "Standard_B1ls"
-}
-
-variable "create_public_ip" {
-  description = "Whether to create a public IP for the VM"
-  type        = bool
-  default     = false
-}
-
-# Optional public IP
 resource "azurerm_public_ip" "this" {
   count               = var.create_public_ip ? 1 : 0
-  name                = "${var.name}-pip"
+  name                = "${var.name}-ip"
   location            = var.location
   resource_group_name = var.resource_group_name
   allocation_method   = "Dynamic"
@@ -94,13 +51,5 @@ resource "azurerm_linux_virtual_machine" "this" {
     sku       = "server"
     version   = "latest"
   }
-}
-
-output "jump_private_ip" {
-  value = azurerm_network_interface.this.private_ip_address
-}
-
-output "jump_public_ip" {
-  value = var.create_public_ip ? azurerm_public_ip.this[0].id : null
 }
 

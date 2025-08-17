@@ -3,7 +3,7 @@ data "terraform_remote_state" "hub" {
   backend = "azurerm"
   config = {
     resource_group_name  = "rg-tfstate"
-    storage_account_name = "tfstatehub99676"
+    storage_account_name = "tfstatehub49131"
     container_name       = "tfstate"
     key                  = "terraform.tfstate"
   }

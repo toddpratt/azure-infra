@@ -8,31 +8,6 @@ terraform {
   }
 }
 
-# ---------------------------
-# Inputs
-# ---------------------------
-variable "resource_group_name" { type = string }
-variable "location"            { type = string }
-variable "name_prefix"         { type = string }
-variable "vnet_cidr"           { type = string }
-variable "subnets"             { type = map(string) }
-variable "peer_to_vnet_id" {
-  type        = string
-  default     = null
-}
-variable "peer_to_vnet_name" {
-  type        = string
-  default     = null
-}
-variable "peer_network_rg" {
-  type        = string
-  default     = null
-}
-variable "jump_private_ip" { type = string }
-
-# ---------------------------
-# Resource Group + VNet + Subnets
-# ---------------------------
 resource "azurerm_resource_group" "rg" {
   name     = var.resource_group_name
   location = var.location
@@ -45,26 +20,20 @@ resource "azurerm_virtual_network" "vnet" {
   resource_group_name = azurerm_resource_group.rg.name
 }
 
-resource "azurerm_virtual_network_peering" "to_hub" {
-  name                         = "${var.name_prefix}-to-hub"
-  resource_group_name          = var.resource_group_name
-  virtual_network_name         = azurerm_virtual_network.vnet.name
-  remote_virtual_network_id    = var.peer_to_vnet_id
-  allow_forwarded_traffic      = true
-  allow_gateway_transit        = false
-  use_remote_gateways          = false
-  allow_virtual_network_access = true
+module "vnet_peering_to" {
+  name      = "vnet_peering_to"
+  source    = "../../modules/vnet_peering"
+  rg_name   = var.resource_group_name
+  vnet_name = azurerm_virtual_network.vnet.name
+  peer_id   = var.peer_to_vnet_id
 }
 
-resource "azurerm_virtual_network_peering" "from_hub" {
-  name                         = "hub-to-${var.name_prefix}"
-  resource_group_name          = var.peer_network_rg
-  virtual_network_name         = var.peer_to_vnet_name
-  remote_virtual_network_id    = azurerm_virtual_network.vnet.id
-  allow_forwarded_traffic      = true
-  allow_gateway_transit        = false
-  use_remote_gateways          = false
-  allow_virtual_network_access = true
+module "vnet_peering_from" {
+  name      = "vnet_peering_from"
+  source    = "../../modules/vnet_peering"
+  rg_name   = var.peer_network_rg
+  vnet_name = var.peer_to_vnet_name
+  peer_id   = azurerm_virtual_network.vnet.id
 }
 
 resource "azurerm_subnet" "proxy" {
@@ -333,26 +302,5 @@ resource "azurerm_subnet_network_security_group_association" "web_assoc" {
 resource "azurerm_subnet_network_security_group_association" "db_assoc" {
   subnet_id                 = azurerm_subnet.db.id
   network_security_group_id = azurerm_network_security_group.db.id
-}
-
-# ---------------------------
-# Outputs (handy for debugging)
-# ---------------------------
-output "subnet_ids" {
-  value = {
-    proxy = azurerm_subnet.proxy.id
-    api   = azurerm_subnet.api.id
-    web   = azurerm_subnet.web.id
-    db    = azurerm_subnet.db.id
-  }
-}
-
-output "nsg_ids" {
-  value = {
-    proxy = azurerm_network_security_group.proxy.id
-    api   = azurerm_network_security_group.api.id
-    web   = azurerm_network_security_group.web.id
-    db    = azurerm_network_security_group.db.id
-  }
 }
 

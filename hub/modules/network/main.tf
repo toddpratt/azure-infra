@@ -8,12 +8,6 @@ terraform {
   }
 }
 
-variable "resource_group_name" { type = string }
-variable "location"            { type = string }
-variable "name_prefix"         { type = string }
-variable "vnet_cidr"           { type = string }
-variable "subnets"             { type = map(string) }
-
 resource "azurerm_resource_group" "rg" {
   name     = var.resource_group_name
   location = var.location
@@ -162,29 +156,5 @@ resource "azurerm_subnet_network_security_group_association" "cicd_assoc" {
 resource "azurerm_subnet_network_security_group_association" "observability_assoc" {
   subnet_id                 = azurerm_subnet.observability.id
   network_security_group_id = azurerm_network_security_group.observability.id
-}
-
-output "subnet_ids" {
-  value = {
-    jump          = azurerm_subnet.jump.id
-    cicd          = azurerm_subnet.cicd.id
-    observability = azurerm_subnet.observability.id
-  }
-}
-
-output "nsg_ids" {
-  value = {
-    jump = azurerm_network_security_group.jump.id
-    cicd   = azurerm_network_security_group.cicd.id
-    observability    = azurerm_network_security_group.observability.id
-  }
-}
-
-output "vnet_id" {
-  value = azurerm_virtual_network.vnet.id
-}
-
-output "vnet_name" {
-  value = azurerm_virtual_network.vnet.name
 }
 

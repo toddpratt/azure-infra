@@ -1,19 +1,3 @@
-terraform {
-  backend "local" {} # bootstrap uses local state only
-}
-
-provider "azurerm" {
-  features {}
-}
-
-variable "location" {
-  default = "eastus"
-}
-
-variable "environments" {
-  type    = list(string)
-  default = ["hub", "dev", "staging", "prod"]
-}
 
 resource "azurerm_resource_group" "tfstate" {
   name     = "rg-tfstate"
