@@ -73,7 +73,7 @@ resource "azurerm_network_security_rule" "allow_public_ssh" {
 resource "azurerm_network_security_rule" "allow_rule" {
   count                       = length(var.allow_rules)
   name                        = "allow-rule-${count.index}"
-  priority                    = 101 + count.index
+  priority                    = 200 + count.index
   direction                   = "Inbound"
   access                      = "Allow"
   protocol                    = "Tcp"
