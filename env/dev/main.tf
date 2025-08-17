@@ -39,7 +39,6 @@ module "proxy" {
   count               = 1
   source              = "../../modules/vm"
   name                = "proxy-${count.index}"
-  ansible_group       = "proxy"
   resource_group_name = var.resource_group
   location            = var.location
   subnet_id           = module.network.subnet_ids["proxy"]
@@ -51,7 +50,6 @@ module "api" {
   count               = 2
   source              = "../../modules/vm"
   name                = "api-${count.index}"
-  ansible_group       = "api"
   resource_group_name = var.resource_group
   location            = var.location
   subnet_id           = module.network.subnet_ids["api"]
@@ -63,7 +61,6 @@ module "web" {
   count               = 1
   source              = "../../modules/vm"
   name                = "web-${count.index}"
-  ansible_group       = "web"
   resource_group_name = var.resource_group
   location            = var.location
   subnet_id           = module.network.subnet_ids["web"]
@@ -75,7 +72,6 @@ module "db" {
   count               = 1
   source              = "../../modules/vm"
   name                = "db-${count.index}"
-  ansible_group       = "db"
   resource_group_name = var.resource_group
   location            = var.location
   subnet_id           = module.network.subnet_ids["db"]
