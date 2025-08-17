@@ -79,7 +79,7 @@ resource "azurerm_linux_virtual_machine" "this" {
 
   admin_ssh_key {
     username   = var.admin_username
-    public_key = file(var.ssh_public_key)
+    public_key = var.ssh_public_key
   }
 
   os_disk {
@@ -90,8 +90,17 @@ resource "azurerm_linux_virtual_machine" "this" {
 
   source_image_reference {
     publisher = "Canonical"
-    offer     = "0001-com-ubuntu-server-noble"
-    sku       = "24_04-lts-gen2"
+    offer     = "ubuntu-24_04-lts"
+    sku       = "server"
     version   = "latest"
   }
 }
+
+output "jump_private_ip" {
+  value = azurerm_network_interface.this.private_ip_address
+}
+
+output "jump_public_ip" {
+  value = var.create_public_ip ? azurerm_public_ip.this[0].id : null
+}
+

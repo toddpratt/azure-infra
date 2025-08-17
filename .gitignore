@@ -3,3 +3,4 @@
 *.auto.tfvars.json
 terraform.tfvars
 terraform.tfvars.json
+*.tfstate

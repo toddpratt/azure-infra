@@ -16,6 +16,19 @@ variable "location"            { type = string }
 variable "name_prefix"         { type = string }
 variable "vnet_cidr"           { type = string }
 variable "subnets"             { type = map(string) }
+variable "peer_to_vnet_id" {
+  type        = string
+  default     = null
+}
+variable "peer_to_vnet_name" {
+  type        = string
+  default     = null
+}
+variable "peer_network_rg" {
+  type        = string
+  default     = null
+}
+variable "jump_private_ip" { type = string }
 
 # ---------------------------
 # Resource Group + VNet + Subnets
@@ -30,6 +43,28 @@ resource "azurerm_virtual_network" "vnet" {
   address_space       = [var.vnet_cidr]
   location            = azurerm_resource_group.rg.location
   resource_group_name = azurerm_resource_group.rg.name
+}
+
+resource "azurerm_virtual_network_peering" "to_hub" {
+  name                         = "${var.name_prefix}-to-hub"
+  resource_group_name          = var.resource_group_name
+  virtual_network_name         = azurerm_virtual_network.vnet.name
+  remote_virtual_network_id    = var.peer_to_vnet_id
+  allow_forwarded_traffic      = true
+  allow_gateway_transit        = false
+  use_remote_gateways          = false
+  allow_virtual_network_access = true
+}
+
+resource "azurerm_virtual_network_peering" "from_hub" {
+  name                         = "hub-to-${var.name_prefix}"
+  resource_group_name          = var.peer_network_rg
+  virtual_network_name         = var.peer_to_vnet_name
+  remote_virtual_network_id    = azurerm_virtual_network.vnet.id
+  allow_forwarded_traffic      = true
+  allow_gateway_transit        = false
+  use_remote_gateways          = false
+  allow_virtual_network_access = true
 }
 
 resource "azurerm_subnet" "proxy" {
@@ -135,6 +170,20 @@ resource "azurerm_network_security_rule" "web_allow_proxy_8081" {
   network_security_group_name = azurerm_network_security_group.web.name
 }
 
+resource "azurerm_network_security_rule" "web_allow_jump_host" {
+  name                        = "allow-jumphost"
+  priority                    = 120
+  direction                   = "Inbound"
+  access                      = "Allow"
+  protocol                    = "Tcp"
+  source_port_range           = "*"
+  destination_port_range      = "*"
+  source_address_prefixes     = [var.jump_private_ip]
+  destination_address_prefix  = "*"
+  resource_group_name         = azurerm_resource_group.rg.name
+  network_security_group_name = azurerm_network_security_group.web.name
+}
+
 # API NSG: deny-all from VNet, then allow proxy -> api : 8080, 8081
 resource "azurerm_network_security_rule" "api_deny_vnet" {
   name                        = "deny-vnet-inbound"
@@ -178,6 +227,20 @@ resource "azurerm_network_security_rule" "api_allow_proxy_8081" {
   network_security_group_name = azurerm_network_security_group.api.name
 }
 
+resource "azurerm_network_security_rule" "api_allow_jump_host" {
+  name                        = "allow-jumphost"
+  priority                    = 120
+  direction                   = "Inbound"
+  access                      = "Allow"
+  protocol                    = "Tcp"
+  source_port_range           = "*"
+  destination_port_range      = "*"
+  source_address_prefixes     = [var.jump_private_ip]
+  destination_address_prefix  = "*"
+  resource_group_name         = azurerm_resource_group.rg.name
+  network_security_group_name = azurerm_network_security_group.api.name
+}
+
 # DB NSG: deny-all from VNet, then allow api -> db : 3306
 resource "azurerm_network_security_rule" "db_deny_vnet" {
   name                        = "deny-vnet-inbound"
@@ -207,6 +270,20 @@ resource "azurerm_network_security_rule" "db_allow_api_3306" {
   network_security_group_name = azurerm_network_security_group.db.name
 }
 
+resource "azurerm_network_security_rule" "db_allow_jump_host" {
+  name                        = "allow-jumphost"
+  priority                    = 120
+  direction                   = "Inbound"
+  access                      = "Allow"
+  protocol                    = "Tcp"
+  source_port_range           = "*"
+  destination_port_range      = "*"
+  source_address_prefixes     = [var.jump_private_ip]
+  destination_address_prefix  = "*"
+  resource_group_name         = azurerm_resource_group.rg.name
+  network_security_group_name = azurerm_network_security_group.db.name
+}
+
 # (Optional) PROXY NSG: if you want to lock inbound to proxy from VNet too
 resource "azurerm_network_security_rule" "proxy_deny_vnet" {
   name                        = "deny-vnet-inbound"
@@ -222,6 +299,19 @@ resource "azurerm_network_security_rule" "proxy_deny_vnet" {
   network_security_group_name = azurerm_network_security_group.proxy.name
 }
 
+resource "azurerm_network_security_rule" "proxy_allow_jump_host" {
+  name                        = "allow-jumphost"
+  priority                    = 120
+  direction                   = "Inbound"
+  access                      = "Allow"
+  protocol                    = "Tcp"
+  source_port_range           = "*"
+  destination_port_range      = "*"
+  source_address_prefixes     = [var.jump_private_ip]
+  destination_address_prefix  = "*"
+  resource_group_name         = azurerm_resource_group.rg.name
+  network_security_group_name = azurerm_network_security_group.proxy.name
+}
 # ---------------------------
 # Associations: attach NSGs to subnets
 # ---------------------------

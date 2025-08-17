@@ -1,6 +1,0 @@
-#! /bin/bash
-
-set -euo pipefail
-source "$(dirname $0)/config.env"
-az group create -n "$TFSTATE_RG" -l "$TFSTATE_LOCATION"
-
