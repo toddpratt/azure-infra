@@ -21,62 +21,80 @@ resource "azurerm_virtual_network" "vnet" {
 }
 
 module "jump_subnet" {
-  source      = "../base_subnet"
+  source      = "../../../modules/base_subnet"
   name_prefix = "jump"
   rg_name     = azurerm_resource_group.rg.name
   location    = azurerm_resource_group.rg.location
   vnet_name   = azurerm_virtual_network.vnet.name
   subnet      = var.subnets.jump
   public_ssh  = true
+  metrics_subnet  = var.subnets.metrics
 }
 
 module "cicd_subnet" {
-  source          = "../base_subnet"
+  source          = "../../../modules/base_subnet"
   name_prefix     = "cicd"
   rg_name         = azurerm_resource_group.rg.name
   location        = azurerm_resource_group.rg.location
   vnet_name       = azurerm_virtual_network.vnet.name
   subnet          = var.subnets.cicd
   jumphost_subnet = var.subnets.jump
+  metrics_subnet  = var.subnets.metrics
 }
 
 module "observability_subnet" {
-  source          = "../base_subnet"
+  source          = "../../../modules/base_subnet"
   name_prefix     = "observability"
   rg_name         = azurerm_resource_group.rg.name
   location        = azurerm_resource_group.rg.location
   vnet_name       = azurerm_virtual_network.vnet.name
   subnet          = var.subnets.observability
   jumphost_subnet = var.subnets.jump
+  metrics_subnet  = var.subnets.metrics
 }
 
 module "metrics_subnet" {
-  source          = "../base_subnet"
+  source          = "../../../modules/base_subnet"
   name_prefix     = "metrics"
   rg_name         = azurerm_resource_group.rg.name
   location        = azurerm_resource_group.rg.location
   vnet_name       = azurerm_virtual_network.vnet.name
   subnet          = var.subnets.metrics
   jumphost_subnet = var.subnets.jump
+  metrics_subnet  = var.subnets.metrics
+  allow_rules = [
+    { # Prometheus web ui / api
+      source_ip  = var.subnets.observability
+      port_range = "9090"
+    }
+  ]
 }
 
 module "logs_subnet" {
-  source          = "../base_subnet"
+  source          = "../../../modules/base_subnet"
   name_prefix     = "logs"
   rg_name         = azurerm_resource_group.rg.name
   location        = azurerm_resource_group.rg.location
   vnet_name       = azurerm_virtual_network.vnet.name
   subnet          = var.subnets.logs
   jumphost_subnet = var.subnets.jump
+  metrics_subnet  = var.subnets.metrics
+  allow_rules = [
+    { # Loki Port
+      source_ip  = "*"
+      port_range = "3100"
+    }
+  ]
 }
 
 module "trace_subnet" {
-  source          = "../base_subnet"
+  source          = "../../../modules/base_subnet"
   name_prefix     = "trace"
   rg_name         = azurerm_resource_group.rg.name
   location        = azurerm_resource_group.rg.location
   vnet_name       = azurerm_virtual_network.vnet.name
   subnet          = var.subnets.trace
   jumphost_subnet = var.subnets.jump
+  metrics_subnet  = var.subnets.metrics
 }
 

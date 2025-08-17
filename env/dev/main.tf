@@ -25,7 +25,8 @@ module "network" {
   peer_to_vnet_name   = data.terraform_remote_state.hub.outputs.hub_vnet_name
   peer_to_vnet_id     = data.terraform_remote_state.hub.outputs.hub_vnet_id
   peer_network_rg     = data.terraform_remote_state.hub.outputs.hub_resource_group
-  jump_private_ip     = data.terraform_remote_state.hub.outputs.hub_subnets.jump
+  jump_subnet         = data.terraform_remote_state.hub.outputs.hub_subnets.jump
+  metrics_subnet      = data.terraform_remote_state.hub.outputs.hub_subnets.metrics
   subnets = {
     proxy = "10.10.1.0/24"
     api   = "10.10.2.0/24"

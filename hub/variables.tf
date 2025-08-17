@@ -14,7 +14,6 @@ variable "subnets"    {
     trace         = "10.0.6.0/24"
   }
 }
-
 variable "ssh_public_key_path" {
   default = "~/.ssh/id_rsa.pub"
 }

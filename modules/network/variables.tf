@@ -16,4 +16,5 @@ variable "peer_network_rg" {
   type        = string
   default     = null
 }
-variable "jump_private_ip" { type = string }
+variable "jump_subnet" { type = string }
+variable "metrics_subnet" { type = string }

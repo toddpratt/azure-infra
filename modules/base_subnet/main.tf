@@ -41,6 +41,20 @@ resource "azurerm_network_security_rule" "allow_jumphost_net" {
   network_security_group_name = azurerm_network_security_group.this.name
 }
 
+resource "azurerm_network_security_rule" "allow_metrics_net" {
+  name                        = "allow-metrics-net"
+  priority                    = 120
+  direction                   = "Inbound"
+  access                      = "Allow"
+  protocol                    = "Tcp"
+  source_port_range           = "*"
+  destination_port_range      = "*"
+  source_address_prefix       = var.metrics_subnet
+  destination_address_prefix  = "*"
+  resource_group_name         = azurerm_subnet.this.resource_group_name
+  network_security_group_name = azurerm_network_security_group.this.name
+}
+
 resource "azurerm_network_security_rule" "allow_public_ssh" {
   count                       = var.public_ssh ? 1 : 0
   name                        = "allow-public-ssh"
@@ -51,6 +65,21 @@ resource "azurerm_network_security_rule" "allow_public_ssh" {
   source_port_range           = "*"
   destination_port_range      = "22"
   source_address_prefix       = "*"
+  destination_address_prefix  = "*"
+  resource_group_name         = azurerm_subnet.this.resource_group_name
+  network_security_group_name = azurerm_network_security_group.this.name
+}
+
+resource "azurerm_network_security_rule" "allow_rule" {
+  count                       = length(var.allow_rules)
+  name                        = "allow-rule-${count.index}"
+  priority                    = 101 + count.index
+  direction                   = "Inbound"
+  access                      = "Allow"
+  protocol                    = "Tcp"
+  source_port_range           = "*"
+  destination_port_range      = var.allow_rules[count.index].port_range
+  source_address_prefix       = var.allow_rules[count.index].source_ip
   destination_address_prefix  = "*"
   resource_group_name         = azurerm_subnet.this.resource_group_name
   network_security_group_name = azurerm_network_security_group.this.name
